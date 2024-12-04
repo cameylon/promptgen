@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Replit Project Prompt Generator</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        :root {
+            --bg-color: #121212;
+            --container-bg-color: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #00e676;
+            --accent-color-hover: #00c853;
+            --input-bg-color: #2c2c2c;
+            --border-color: #333;
+        }
+        .light-mode {
+            --bg-color: #ffffff;
+            --container-bg-color: #f5f5f5;
+            --text-color: #121212;
+            --accent-color: #00796b;
+            --accent-color-hover: #004d40;
+            --input-bg-color: #e0e0e0;
+            --border-color: #ccc;
+        }
+        .container {
+            background-color: var(--container-bg-color);
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 800px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            animation: fadeIn 1s ease-in;
+        }
+        h1 {
+            text-align: center;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            animation: slideDown 1s ease-out;
+        }
+        label {
+            color: var(--accent-color);
+            margin-top: 15px;
+            display: block;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+        .button {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: var(--accent-color-hover);
+            transform: scale(1.02);
+        }
+        .output {
+            background-color: var(--input-bg-color);
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-color);
+            position: relative;
+            animation: fadeIn 1s ease-in;
+        }
+        .output-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .copy-btn, .download-btn {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        .copy-btn:hover, .download-btn:hover {
+            background-color: var(--accent-color-hover);
+        }
+        .copied-notification {
+            position: absolute;
+            top: -30px;
+            right: 10px;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .copied-notification.show {
+            opacity: 1;
+        }
+        .highlight {
+            background-color: #ffeb3b;
+            color: #000;
+        }
+        .loading-spinner {
+            border: 4px solid var(--input-bg-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: transparent;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .theme-toggle:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        /* Animations */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            animation: fadeIn 0.5s;
+        }
+        .modal-content {
+            background-color: var(--container-bg-color);
+            margin: auto;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            position: relative;
+            animation: slideDown 0.5s;
+        }
+        .close {
+            color: var(--text-color);
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: var(--accent-color);
+        }
+        /* Responsive Design */
+        @media screen and (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .modal-content {
+                width: 95%;
+            }
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">Toggle Theme</button>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <span class="close" id="closeModal" aria-label="Close Help">&times;</span>
+            <h2>How to Use the Prompt Generator</h2>
+            <p>Fill out the form with your project details and click "Generate Prompt". The application will create a formatted prompt based on your input. You can copy or download the prompt for your use.</p>
+            <ul>
+                <li><strong>Project Title:</strong> The name of your project.</li>
+                <li><strong>Project Description:</strong> A brief overview of your project.</li>
+                <li><strong>Technologies to Use:</strong> List the technologies separated by commas.</li>
+                <li><strong>Key Features:</strong> List features, each on a new line.</li>
+                <!-- Add more instructions as needed -->
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Replit Project Prompt Generator</h1>
+       <center> <p>By Sammie C. </p></center>
+       <center> <p>4-ever-FREE 😀 </p></center>
+
+        <!-- Buttons -->
+        <button class="button" id="resetBtn" aria-label="Reset Form">Reset Form</button>
+        <button class="button" id="helpBtn" aria-label="Open Help">Help</button>
+
+        <form id="promptForm">
+            <label for="projectTitle">Project Title:</label>
+            <input type="text" id="projectTitle" placeholder="REQURED e.g., Personal Portfolio Website" required>
+
+            <label for="description">Project Description:</label>
+            <textarea id="description" placeholder="REQURED e.g., A personal portfolio to showcase projects and skills." required></textarea>
+
+            <label for="technologies">Technologies to Use:</label>
+            <input type="text" id="technologies" placeholder="REQURED e.g., HTML, CSS, JavaScript" required>
+
+            <label for="features">Key Features:</label>
+            <textarea id="features" placeholder="REQURED e.g., Responsive design\nContact form\nProject gallery" required></textarea>
+
+            <label for="challenges">Potential Challenges:</label>
+            <textarea id="challenges" placeholder="OPTIONAL e.g., Implementing responsive design\nEnsuring cross-browser compatibility"></textarea>
+
+            <label for="resources">Additional Resources:</label>
+            <textarea id="resources" placeholder="OPTIONAL e.g., MDN Web Docs\nCSS-Tricks"></textarea>
+
+            <label for="outcome">Expected Outcome:</label>
+            <textarea id="outcome" placeholder="REQURED e.g., A fully functional portfolio website that effectively showcases my work." required></textarea>
+
+            <label for="notes">Additional Notes:</label>
+            <textarea id="notes" placeholder="OPTIONAL e.g., Ensure the website is optimized for SEO and fast loading times."></textarea>
+
+            <button type="button" id="generateBtn" class="button" aria-label="Generate Prompt">Generate Prompt</button>
+            <div id="loading" class="loading-spinner" style="display:none;" aria-label="Loading"></div>
+        </form>
+
+        <div id="output" class="output" style="display:none;" aria-live="polite">
+            <div class="output-buttons">
+                <button class="download-btn" id="downloadBtn" aria-label="Download Prompt">Download</button>
+                <button class="copy-btn" id="copyBtn" aria-label="Copy Prompt">Copy</button>
+                <div class="copied-notification" id="copiedNotification">Copied!</div>
+            </div>
+            <pre id="formattedOutput"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+        });
+
+        // Function to suggest synonyms
+        function suggestSynonyms(text) {
+            const synonyms = {
+                'use': 'utilize',
+                'make': 'create',
+                'showcase': 'display',
+                'important': 'crucial',
+                'ensure': 'guarantee',
+                'improve': 'enhance'
+            };
+            let newText = text;
+            Object.keys(synonyms).forEach(word => {
+                const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                newText = newText.replace(regex, synonyms[word]);
+            });
+            return newText;
+        }
+
+        // Function to rephrase sentences
+        function rephraseText(text) {
+            let sentences = text.match(/[^\.!\?]+[\.!\?]+/g);
+            if (sentences) {
+                sentences = sentences.map(sentence => {
+                    let parts = sentence.split(', ');
+                    if (parts.length > 1) {
+                        return parts.reverse().join(', ');
+                    }
+                    return sentence;
+                });
+                return sentences.join(' ');
+            }
+            return text;
+        }
+
+        // Function to extract keywords
+        function extractKeywords(text) {
+            // Convert text to lowercase and split into words
+            const words = text.toLowerCase().match(/\b\w+\b/g);
+            // List of common English stop words
+            const stopWords = ['the', 'and', 'to', 'a', 'of', 'in', 'it', 'is', 'that', 'with', 'for', 'on', 'as', 'are', 'at', 'this', 'by', 'from', 'or', 'be', 'an', 'which', 'but', 'not', 'we', 'you', 'can', 'all', 'your', 'our', 'more', 'will', 'one'];
+            // Filter out stop words and short words
+            const keywords = words.filter(word => !stopWords.includes(word) && word.length > 2);
+            // Get unique keywords
+            return [...new Set(keywords)];
+        }
+
+        // Auto-save drafts
+        window.addEventListener('load', () => {
+            const fields = ['projectTitle', 'description', 'technologies', 'features', 'challenges', 'resources', 'outcome', 'notes'];
+            fields.forEach(field => {
+                const savedValue = localStorage.getItem(field);
+                if (savedValue) {
+                    document.getElementById(field).value = savedValue;
+                }
+                document.getElementById(field).addEventListener('input', () => {
+                    localStorage.setItem(field, document.getElementById(field).value);
+                });
+            });
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            // Show loading spinner
+            document.getElementById('loading').style.display = 'block';
+
+            const projectTitle = document.getElementById('projectTitle').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const technologies = document.getElementById('technologies').value.split(',').map(tech => tech.trim()).filter(tech => tech);
+            const features = document.getElementById('features').value.split('\n').map(feature => feature.trim()).filter(feature => feature);
+            const challenges = document.getElementById('challenges').value.split('\n').map(challenge => challenge.trim()).filter(challenge => challenge);
+            const resources = document.getElementById('resources').value.split('\n').map(resource => resource.trim()).filter(resource => resource);
+            const outcome = document.getElementById('outcome').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+
+            // Check for required fields
+            if (!projectTitle || !description || !technologies.length || !features.length || !outcome) {
+                alert('Please fill out all required fields.');
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            let prompt = `**Project Title:** ${projectTitle}\n\n`;
+            prompt += `**Project Description:** ${description}\n\n`;
+
+            if (technologies.length > 0) {
+                prompt += `**Technologies to Use:**\n`;
+                technologies.forEach(tech => {
+                    prompt += `- ${tech}\n`;
+                });
+                prompt += `\n`;
+            }
+
+            if (features.length > 0) {
+                prompt += `**Key Features:**\n`;
+                features.forEach((feature, index) => {
+                    prompt += `${index + 1}. ${feature}\n`;
+                });
+                prompt += `\n`;
+            }
+
+            if (challenges.length > 0) {
+                prompt += `**Potential Challenges:**\n`;
+                challenges.forEach(challenge => {
+                    prompt += `- ${challenge}\n`;
+                });
+                prompt += `\n`;
+            }
+
+            if (resources.length > 0) {
+                prompt += `**Additional Resources:**\n`;
+                resources.forEach(resource => {
+                    prompt += `- ${resource}\n`;
+                });
+                prompt += `\n`;
+            }
+
+            prompt += `**Expected Outcome:** ${outcome}\n\n`;
+
+            if (notes) {
+                prompt += `**Additional Notes:** ${notes}\n`;
+            }
+
+            // Apply improvements
+            let improvedPrompt = prompt;
+
+            // Suggest synonyms
+            improvedPrompt = suggestSynonyms(improvedPrompt);
+
+            // Rephrase text
+            improvedPrompt = rephraseText(improvedPrompt);
+
+            // Highlight keywords
+            let keywords = extractKeywords(improvedPrompt);
+            keywords.forEach(keyword => {
+                let regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                improvedPrompt = improvedPrompt.replace(regex, `<span class="highlight">${keyword}</span>`);
+            });
+
+            document.getElementById('formattedOutput').innerHTML = improvedPrompt;
+            document.getElementById('output').style.display = 'block';
+
+            // Hide loading spinner
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', async function() {
+            try {
+                const textToCopy = document.getElementById('formattedOutput').innerText;
+                await navigator.clipboard.writeText(textToCopy);
+
+                // Show copied notification
+                const notification = document.getElementById('copiedNotification');
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const text = document.getElementById('formattedOutput').innerText;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = 'prompt.txt';
+            link.href = window.URL.createObjectURL(blob);
+            link.click();
+        });
+
+        // Reset form functionality
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset the form? This will clear all inputs.')) {
+                document.getElementById('promptForm').reset();
+                localStorage.clear();
+            }
+        });
+
+        // Help modal functionality
+        const helpModal = document.getElementById('helpModal');
+        const helpBtn = document.getElementById('helpBtn');
+        const closeModal = document.getElementById('closeModal');
+
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'block';
+            helpModal.setAttribute('aria-hidden', 'false');
+        });
+
+        closeModal.addEventListener('click', () => {
+            helpModal.style.display = 'none';
+            helpModal.setAttribute('aria-hidden', 'true');
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target == helpModal) {
+                helpModal.style.display = 'none';
+                helpModal.setAttribute('aria-hidden', 'true');
+            }
+        });
+    </script>
+</body>
+</html>
